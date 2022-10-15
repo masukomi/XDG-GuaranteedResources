@@ -46,6 +46,8 @@ This library is free software; you can redistribute it and/or modify it under th
 =end pod
 
 
+unit module XDG::GuaranteedResources:ver<1.0.0>:auth<masukomi (masukomi@masukomi.org)>;
+
 use XDG::BaseDirectory :terms;
 use XDG::GuaranteedResources::Resourcer;
 
