@@ -22,6 +22,13 @@ Many tools expect a config file, sqlite database, or similar to be present. We s
 
 C<XDG::GuaranteedResources> handles this common operation.
 
+=para
+For example:
+=para
+Let's assume your script uses a pre-prepared sqlite db that you store under resources. Store it under C<resources/data/my_database.db>, then when your script boots up you can call C<guarantee-resource("data/my_database.db");>. If that file already exists under C<%*ENV<XDG_CONFIG_HOME>/my_database.db> nothing will happen. If it isn't found there,
+a fresh copy will be placed there from the one you referenced in C<resources>.
+
+
 
 Resources that should be copied to C<XDG_CONFIG_HOME>
 should be stored under C<resources/config>

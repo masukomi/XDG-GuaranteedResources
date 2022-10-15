@@ -20,6 +20,10 @@ Many tools expect a config file, sqlite database, or similar to be present. We s
 
 `XDG::GuaranteedResources` handles this common operation.
 
+For example:
+
+Let's assume your script uses a pre-prepared sqlite db that you store under resources. Store it under `resources/data/my_database.db`, then when your script boots up you can call `guarantee-resource("data/my_database.db");`. If that file already exists under `%*ENV<XDG_CONFIG_HOME>/my_database.db` nothing will happen. If it isn't found there, a fresh copy will be placed there from the one you referenced in `resources`.
+
 Resources that should be copied to `XDG_CONFIG_HOME` should be stored under `resources/config`
 
 Resources that should be copied to `XDG_DATA_HOME` should be stored under `resources/data`
