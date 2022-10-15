@@ -1,0 +1,43 @@
+use Test;
+use File::Directory::Tree;
+use lib 'lib';
+use XDG::GuaranteedResources;
+
+
+my $base=$*CWD.child(".test_" ~ $*PID);
+$base.mkdir;
+
+# Only supports CONFIG and DATA
+%*ENV<XDG_CONFIG_HOME> = $base.child('.config').Str;
+%*ENV<XDG_DATA_HOME> = $base.child($*SPEC.catfile('.local', 'share')).Str;
+
+# sanity check...
+is(%*ENV<XDG_CONFIG_HOME>.IO.e, False, (%*ENV<XDG_CONFIG_HOME> ~ " shouldn't exist yet"));
+is(%*ENV<XDG_DATA_HOME>.IO.e, False, (%*ENV<XDG_DATA_HOME> ~ " shouldn't exist yet"));
+
+# test that it copies things
+is(guarantee-resource("config/config_file.test").IO.e, True, "top level config file");
+is(guarantee-resource("data/data_file.test").IO.e, True, "top level data file");
+is(guarantee-resource("data/data_subdir/data_subdir_file.test").IO.e, True, "data file in subdirectory");
+
+# test that it doesn't overwrite existing things
+my $pre_existing_file_path = IO::Spec::Unix.catpath($, %*ENV<XDG_CONFIG_HOME>,  "config_file.test");
+my $fh = open ($pre_existing_file_path), :w;
+$fh.print("existing_stuff");
+$fh.close;
+
+is(guarantee-resource("config/config_file.test").IO.e, True, "top level config file");
+$fh = open $pre_existing_file_path, :r;
+my $contents = $fh.slurp;
+$fh.close;
+is($contents, "existing_stuff", "contents overwritten");
+
+
+shell("tree $base");
+END {
+   if $base.e {
+      rmtree($base);
+   }
+}
+
+done-testing;

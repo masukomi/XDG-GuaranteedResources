@@ -1,0 +1,31 @@
+{
+  "auth": "zef:masukomi",
+  "authors": [
+    "masukomi <masukomi@masukomi.org>"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "XDG::BaseDirectory"
+  ],
+  "description": "Guarantees that a resource is present in the expected XDG Base Directory directory",
+  "license": "MIT",
+  "name": "XDG::GuaranteedResources",
+  "perl": "6.d",
+  "provides": {
+    "XDG::GuaranteedResources": "lib/XDG/GuaranteedResources.rakumod",
+    "XDG::GuaranteedResources::Resourcer": "lib/XDG/GuaranteedResources/Resourcer.rakumod"
+  },
+  "resources": [
+    "config/config_file.test",
+    "data/data_file.test",
+    "data/data_subdir/data_subdir_file.test"
+  ],
+  "source-url": "https://github.com/masukomi/XDG-GuaranteedResources",
+  "tags": [
+  ],
+  "test-depends": [
+    "File::Directory::Tree"
+  ],
+  "version": "0.0.1"
+}
