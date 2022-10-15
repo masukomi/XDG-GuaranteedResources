@@ -14,6 +14,8 @@ use XDG::GuaranteedResources;
 # path must be listed in the resources array of your META6.json
 guarantee-resource("config/app_config.toml");
 
+# if you have multiple to guarantee you can call
+guarantee-resources(<config/app_config.toml data/cool_database.db>);
 =end code
 
 =head1 DESCRIPTION
@@ -53,7 +55,7 @@ This library is free software; you can redistribute it and/or modify it under th
 =end pod
 
 
-unit module XDG::GuaranteedResources:ver<1.0.0>:auth<masukomi (masukomi@masukomi.org)>;
+unit module XDG::GuaranteedResources:ver<1.1.0>:auth<masukomi (masukomi@masukomi.org)>;
 
 use XDG::BaseDirectory :terms;
 use XDG::GuaranteedResources::Resourcer;
@@ -105,7 +107,7 @@ my sub copy-resource(Str $resource, Str $destination) {
 	copy(XDG::GuaranteedResources::Resourcer.gimme{$resource}, $destination);
 }
 
-#| checks if the resource is present and copies it over if not.
+#| Guarantees a resource is present & provides the path it can be found at.
 our sub guarantee-resource(Str $resource_path) is export returns Str {
 	my $io_path = $resource_path.IO;
 	my @dir_array = path-to-directory-array($io_path);
@@ -121,4 +123,13 @@ our sub guarantee-resource(Str $resource_path) is export returns Str {
 		when X::IO::Copy  { die "Unable to copy resource to $xdg_path"; }
 	}
 
+}
+
+#| Guarantees a list of resources are present. Returns the paths they can be found at.
+our sub guarantee-resources(@resource_paths)  is export returns Array {
+	my @response = [];
+	for @resource_paths -> $resource_path {
+		@response.push(guarantee-resource($resource_path));
+	}
+	return @response;
 }

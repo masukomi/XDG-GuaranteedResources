@@ -3,10 +3,13 @@ use File::Directory::Tree;
 use lib 'lib';
 use XDG::GuaranteedResources;
 
+sub create-base-dir() returns IO::Path {
+	my $base = $*CWD.child(".test_" ~ $*PID);
+	$base.mkdir;
+	return $base;
+}
 
-my $base=$*CWD.child(".test_" ~ $*PID);
-$base.mkdir;
-
+my $base = create-base-dir();
 # Only supports CONFIG and DATA
 %*ENV<XDG_CONFIG_HOME> = $base.child('.config').Str;
 %*ENV<XDG_DATA_HOME> = $base.child($*SPEC.catfile('.local', 'share')).Str;
@@ -32,12 +35,18 @@ my $contents = $fh.slurp;
 $fh.close;
 is($contents, "existing_stuff", "contents overwritten");
 
+rmtree($base) if $base.e;
+
+$base = create-base-dir();
+my @paths = guarantee-resources(<config/config_file.test data/data_subdir/data_subdir_file.test>);
+for @paths -> $path {
+	ok($path.IO.e);
+}
+
 
 shell("tree $base");
 END {
-   if $base.e {
-      rmtree($base);
-   }
+	rmtree($base) if $base.e
 }
 
 done-testing;

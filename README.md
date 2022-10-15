@@ -11,6 +11,9 @@ use XDG::GuaranteedResources;
 # pass it the relative path to a file under your resources directory
 # path must be listed in the resources array of your META6.json
 guarantee-resource("config/app_config.toml");
+
+# if you have multiple to guarantee you can call
+guarantee-resources(<config/app_config.toml data/cool_database.db>);
 ```
 
 DESCRIPTION
@@ -52,5 +55,15 @@ sub guarantee-resource(
 ) returns Str
 ```
 
-checks if the resource is present and copies it over if not.
+Guarantees a resource is present & provides the path it can be found at.
+
+### sub guarantee-resources
+
+```raku
+sub guarantee-resources(
+    @resource_paths
+) returns Array
+```
+
+Guarantees a list of resources are present. Returns the paths they can be found at.
 
