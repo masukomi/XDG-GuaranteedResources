@@ -17,9 +17,9 @@
     "XDG::GuaranteedResources::Resourcer": "lib/XDG/GuaranteedResources/Resourcer.rakumod"
   },
   "resources": [
-    "config/config_file.test",
-    "data/data_file.test",
-    "data/data_subdir/data_subdir_file.test"
+    "config/xdg-gr/config_file.test",
+    "data/xdg-gr/data_file.test",
+    "data/xdg-gr/data_subdir/data_subdir_file.test"
   ],
   "source-url": "https://github.com/masukomi/XDG-GuaranteedResources",
   "tags": [
