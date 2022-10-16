@@ -6,14 +6,27 @@ XDG::GuaranteedResources - Guarantees that a resource is present in the expected
 SYNOPSIS
 ========
 
+First, you need to implement a class that can get resources from within your package. I suggest you copy this, and change the class name. Alas, this is not something that another package like this one can provide.
+
+    use XDG::GuaranteedResources::AbstractResourcer;
+
+    unit class My::Resourcer does XDG::GuaranteedResources::AbstractResourcer;
+
+    # for XDG::GuaranteedResources::AbstractResourcer
+    method fetch-resource(::?CLASS:U:){%?RESOURCES;}
+
+Once you've got that, you can just pass it in as the 2nd param to either of the provided methods, or assign it to a variable and pass that in.
+
 ```raku
 use XDG::GuaranteedResources;
 # pass it the relative path to a file under your resources directory
 # path must be listed in the resources array of your META6.json
-guarantee-resource("config/my_app/app_config.toml");
+guarantee-resource("config/my_app/app_config.toml", My::Resourcer);
 
+# assigning your resourcer to a variable is fine.
+my $resourcer = My::Resourcer;
 # if you have multiple to guarantee you pass a list to the plural form.
-guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>);
+guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>, $resourcer);
 ```
 
 DESCRIPTION
@@ -49,11 +62,12 @@ Copyright 2022
 
 This library is free software; you can redistribute it and/or modify it under the MIT License.
 
-### sub guarantee-resource
+### multi sub guarantee-resource
 
 ```raku
-sub guarantee-resource(
-    Str $resource_path
+multi sub guarantee-resource(
+    Str $resource_path,
+    $resourcer
 ) returns Str
 ```
 
@@ -63,7 +77,8 @@ Guarantees a resource is present & provides the path it can be found at.
 
 ```raku
 sub guarantee-resources(
-    @resource_paths
+    @resource_paths,
+    $resourcer
 ) returns Array
 ```
 

@@ -7,15 +7,33 @@ XDG::GuaranteedResources - Guarantees that a resource is present in the expected
 =head1 SYNOPSIS
 
 
+First, you need to implement a class that can get resources from within your package. I suggest you copy this, and change the class name. Alas, this is not something that another package like this one can provide.
+
+=begin code
+use XDG::GuaranteedResources::AbstractResourcer;
+
+unit class My::Resourcer does XDG::GuaranteedResources::AbstractResourcer;
+
+# for XDG::GuaranteedResources::AbstractResourcer
+method fetch-resource(::?CLASS:U:){%?RESOURCES;}
+
+=end code
+
+Once you've got that, you can just pass it in as the 2nd param to either of the provided methods, or assign it to a variable and pass that in.
+
 =begin code :lang<raku>
+
+
 
 use XDG::GuaranteedResources;
 # pass it the relative path to a file under your resources directory
 # path must be listed in the resources array of your META6.json
-guarantee-resource("config/my_app/app_config.toml");
+guarantee-resource("config/my_app/app_config.toml", My::Resourcer);
 
+# assigning your resourcer to a variable is fine.
+my $resourcer = My::Resourcer;
 # if you have multiple to guarantee you pass a list to the plural form.
-guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>);
+guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>, $resourcer);
 =end code
 
 =head1 DESCRIPTION
@@ -55,10 +73,9 @@ This library is free software; you can redistribute it and/or modify it under th
 =end pod
 
 
-unit module XDG::GuaranteedResources:ver<1.1.1>:auth<masukomi (masukomi@masukomi.org)>;
+unit module XDG::GuaranteedResources:ver<2.0.0>:auth<masukomi (masukomi@masukomi.org)>;
 
 use XDG::BaseDirectory :terms;
-use XDG::GuaranteedResources::Resourcer;
 
 
 my sub guarantee-dir(Str $dir){
@@ -103,22 +120,23 @@ my sub resource-to-xdg-dir(@directory_array) returns Str {
 }
 
 
-my sub copy-resource(Str $resource, Str $destination) {
-	copy(XDG::GuaranteedResources::Resourcer.gimme{$resource}, $destination);
-}
-
 #| Guarantees a resource is present & provides the path it can be found at.
-our sub guarantee-resource(Str $resource_path) is export returns Str {
+multi sub guarantee-resource(Str $resource_path, $resourcer) is export returns Str {
 	my $io_path = $resource_path.IO;
 	my @dir_array = path-to-directory-array($io_path);
 	my $xdg_dir = resource-to-xdg-dir(@dir_array);
 	guarantee-dir($xdg_dir);
 	my $xdg_path = IO::Spec::Unix.catpath($, $xdg_dir, $io_path.basename);
 	unless $xdg_path.IO.e {
-		copy-resource($resource_path, $xdg_path);
+		copy($resourcer.fetch-resource{$resource_path}, $xdg_path);
 	}
 	return $xdg_path;
 
+	CONTROL {
+		when CX::Warn {
+			die("$resource_path was not defined in your META6.json ");
+		}
+	}
 	CATCH {
 		when X::IO::Copy  { die "Unable to copy resource to $xdg_path"; }
 	}
@@ -126,10 +144,10 @@ our sub guarantee-resource(Str $resource_path) is export returns Str {
 }
 
 #| Guarantees a list of resources are present. Returns the paths they can be found at.
-our sub guarantee-resources(@resource_paths)  is export returns Array {
+our sub guarantee-resources(@resource_paths, $resourcer)  is export returns Array {
 	my @response = [];
 	for @resource_paths -> $resource_path {
-		@response.push(guarantee-resource($resource_path));
+		@response.push(guarantee-resource($resource_path, $resourcer));
 	}
 	return @response;
 }

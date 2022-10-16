@@ -14,7 +14,8 @@
   "perl": "6.d",
   "provides": {
     "XDG::GuaranteedResources": "lib/XDG/GuaranteedResources.rakumod",
-    "XDG::GuaranteedResources::Resourcer": "lib/XDG/GuaranteedResources/Resourcer.rakumod"
+    "XDG::GuaranteedResources::AbstractResourcer": "lib/XDG/GuaranteedResources/AbstractResourcer.rakumod",
+    "XDG::GuaranteedResources::InternalTestResourcer": "lib/XDG/GuaranteedResources/InternalTestResourcer.rakumod"
   },
   "resources": [
     "config/xdg-gr/config_file.test",
@@ -27,5 +28,5 @@
   "test-depends": [
     "File::Directory::Tree"
   ],
-  "version": "1.1.1"
+  "version": "2.0.0"
 }
