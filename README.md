@@ -10,10 +10,10 @@ SYNOPSIS
 use XDG::GuaranteedResources;
 # pass it the relative path to a file under your resources directory
 # path must be listed in the resources array of your META6.json
-guarantee-resource("config/app_config.toml");
+guarantee-resource("config/my_app/app_config.toml");
 
-# if you have multiple to guarantee you can call
-guarantee-resources(<config/app_config.toml data/cool_database.db>);
+# if you have multiple to guarantee you pass a list to the plural form.
+guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>);
 ```
 
 DESCRIPTION
@@ -25,13 +25,15 @@ Many tools expect a config file, sqlite database, or similar to be present. We s
 
 For example:
 
-Let's assume your script uses a pre-prepared sqlite db that you store under resources. Store it under `resources/data/my_database.db`, then when your script boots up you can call `guarantee-resource("data/my_database.db");`. If that file already exists under `%*ENV<XDG_CONFIG_HOME>/my_database.db` nothing will happen. If it isn't found there, a fresh copy will be placed there from the one you referenced in `resources`.
+Let's assume your script uses a pre-prepared sqlite db that you store under resources. Store it under `resources/data/my_app/my_database.db`, then when your script boots up you can call `guarantee-resource("data/my_app/my_database.db");`. If that file already exists under `%*ENV<XDG_CONFIG_HOME>/my_app/my_database.db` nothing will happen. If it isn't found there, a fresh copy will be placed there from the one you referenced in `resources`.
 
-Resources that should be copied to `XDG_CONFIG_HOME` should be stored under `resources/config`
+Note that `my_app` should be the directory name your apps files should be stored under. For example, a config file for [clu](https://github.com/masukomi/clu) would be stored under `~/.config/clu/` after install. So, you would store it under `resources/config/clu/` in your package.
 
-Resources that should be copied to `XDG_DATA_HOME` should be stored under `resources/data`
+Resources that should be copied to `XDG_CONFIG_HOME` should be stored under `resources/config/my_app`
 
-Subdirectories are fine. E.g. `resources/data/subdir/my_db.db`
+Resources that should be copied to `XDG_DATA_HOME` should be stored under `resources/data/my_app`
+
+Subdirectories are fine. E.g. `resources/data/my_app/subdir/my_db.db`
 
 ⚠ Currently only works on Unix (Linux, BSD, macOS, etc.) systems.
 

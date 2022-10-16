@@ -12,10 +12,10 @@ XDG::GuaranteedResources - Guarantees that a resource is present in the expected
 use XDG::GuaranteedResources;
 # pass it the relative path to a file under your resources directory
 # path must be listed in the resources array of your META6.json
-guarantee-resource("config/app_config.toml");
+guarantee-resource("config/my_app/app_config.toml");
 
-# if you have multiple to guarantee you can call
-guarantee-resources(<config/app_config.toml data/cool_database.db>);
+# if you have multiple to guarantee you pass a list to the plural form.
+guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>);
 =end code
 
 =head1 DESCRIPTION
@@ -27,18 +27,18 @@ C<XDG::GuaranteedResources> handles this common operation.
 =para
 For example:
 =para
-Let's assume your script uses a pre-prepared sqlite db that you store under resources. Store it under C<resources/data/my_database.db>, then when your script boots up you can call C<guarantee-resource("data/my_database.db");>. If that file already exists under C<%*ENV<XDG_CONFIG_HOME>/my_database.db> nothing will happen. If it isn't found there,
+Let's assume your script uses a pre-prepared sqlite db that you store under resources. Store it under C<resources/data/my_app/my_database.db>, then when your script boots up you can call C<guarantee-resource("data/my_app/my_database.db");>. If that file already exists under C<%*ENV<XDG_CONFIG_HOME>/my_app/my_database.db> nothing will happen. If it isn't found there,
 a fresh copy will be placed there from the one you referenced in C<resources>.
 
-
+Note that C<my_app> should be the directory name your apps files should be stored under. For example, a config file for L<clu|https://github.com/masukomi/clu> would be stored under C<~/.config/clu/> after install. So, you would store it under C<resources/config/clu/> in your package.
 
 Resources that should be copied to C<XDG_CONFIG_HOME>
-should be stored under C<resources/config>
+should be stored under C<resources/config/my_app>
 
 Resources that should be copied to C<XDG_DATA_HOME>
-should be stored under C<resources/data>
+should be stored under C<resources/data/my_app>
 
-Subdirectories are fine. E.g. C<resources/data/subdir/my_db.db>
+Subdirectories are fine. E.g. C<resources/data/my_app/subdir/my_db.db>
 
 ⚠ Currently only works on Unix (Linux, BSD, macOS, etc.) systems.
 
@@ -55,7 +55,7 @@ This library is free software; you can redistribute it and/or modify it under th
 =end pod
 
 
-unit module XDG::GuaranteedResources:ver<1.1.0>:auth<masukomi (masukomi@masukomi.org)>;
+unit module XDG::GuaranteedResources:ver<1.1.1>:auth<masukomi (masukomi@masukomi.org)>;
 
 use XDG::BaseDirectory :terms;
 use XDG::GuaranteedResources::Resourcer;
