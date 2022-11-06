@@ -1,10 +1,14 @@
-unit module XDG::GuaranteedResources:ver<2.0.0>:auth<masukomi (masukomi@masukomi.org)>;
+unit module XDG::GuaranteedResources:ver<2.1.0>:auth<masukomi (masukomi@masukomi.org)>;
 
 use XDG::BaseDirectory :terms;
 
 
-my sub guarantee-dir(Str $dir){
-	mkdir($dir.Str) unless $dir.IO.e;
+my sub guarantee-dir(Str $dir, Bool :$debug){
+	if $dir.IO.e {
+		note("XDG Dir already exits: $dir") if $debug
+	} else {
+		mkdir($dir.Str);
+	}
 	CATCH {
 		when X::IO::Mkdir { die "Unable to create directory $dir" ; }
 	}
@@ -46,13 +50,17 @@ my sub resource-to-xdg-dir(@directory_array) returns Str {
 
 
 #| Guarantees a resource is present & provides the path it can be found at.
-multi sub guarantee-resource(Str $resource_path, $resourcer) is export returns Str {
+multi sub guarantee-resource(Str $resource_path, $resourcer, Bool :$debug=False) is export returns Str {
 	my $io_path = $resource_path.IO;
 	my @dir_array = path-to-directory-array($io_path);
 	my $xdg_dir = resource-to-xdg-dir(@dir_array);
-	guarantee-dir($xdg_dir);
+	note("XDG DIR for resource: $xdg_dir") if $debug;
+	guarantee-dir($xdg_dir, debug => $debug);
 	my $xdg_path = IO::Spec::Unix.catpath($, $xdg_dir, $io_path.basename);
-	unless $xdg_path.IO.e {
+	if $xdg_path.IO.e {
+		note("Copying $resource_path to $xdg_path") if $debug;
+	} else {
+		note($io_path.basename ~ " already in target dir") if $debug;
 		copy($resourcer.fetch-resource{$resource_path}, $xdg_path);
 	}
 	return $xdg_path;
@@ -69,10 +77,10 @@ multi sub guarantee-resource(Str $resource_path, $resourcer) is export returns S
 }
 
 #| Guarantees a list of resources are present. Returns the paths they can be found at.
-our sub guarantee-resources(@resource_paths, $resourcer)  is export returns Array {
+our sub guarantee-resources(@resource_paths, $resourcer, Bool :$debug=False)  is export returns Array {
 	my @response = [];
 	for @resource_paths -> $resource_path {
-		@response.push(guarantee-resource($resource_path, $resourcer));
+		@response.push(guarantee-resource($resource_path, $resourcer, debug => $debug));
 	}
 	return @response;
 }
