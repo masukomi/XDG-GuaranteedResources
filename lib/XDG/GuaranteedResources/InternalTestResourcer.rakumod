@@ -9,6 +9,5 @@ use XDG::GuaranteedResources::AbstractResourcer;
 
 unit class XDG::GuaranteedResources::InternalTestResourcer does XDG::GuaranteedResources::AbstractResourcer;
 
-method fetch-resource(::?CLASS:U: ) {
-    %?RESOURCES;
-}
+method app-name( ) { 'xdg-gr-test' }
+method fetch-resource(::?CLASS:U: ) {%?RESOURCES;}

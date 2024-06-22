@@ -1,36 +1,74 @@
 NAME
 ====
 
-XDG::GuaranteedResources - Guarantees that a resource is present in the expected XDG Base Directory directory
+XDG::GuaranteedResources - Guarantees that a module's resource is present in the expected XDG Base Directory directory.
+
 
 SYNOPSIS
 ========
 
-First, you need to implement a class that can get resources from within your package. I suggest you copy this, and change the class name. Alas, this is not something that another package like this one can provide.
+Your module's resources should be stored in one of the following directories under `resources`
+: `data`, `config`, `cache`, `runtime`, or `state`. These correspond to the common `XDG_BASE_DIRECTORY` directories.
 
+For example, if you have a default config file, you'd store that under `resources/config/` within your module.
+
+Then you can guarantee there's a copy of it in the appropriate `XDG_BASE_DIRECTORY` by calling  `guarantee-config-resource` like this:
+
+```raku
+use XDG::GuaranteedResources;
+
+guarantee-config-resource("app_config.toml", My::Resourcer);
+
+```
+This will look for `$XDG_CONGIF_HOME/<your app name>/app_config.toml`. If it does not exist, then it will be copied to that location from your module's resources.
+
+
+Files in subdirectories work as well.
+
+```raku
+# module path
+# resources/data/user/user_config.toml
+
+# guarante this with this call
+guarantee-data-resource("user/user_config.toml", My::Resourcer)
+
+```
+
+You've probably noticed that second argument. Your modules resources are hidden from code outside the module. To work around this you'll need to implement a subclass of `XDG::GuaranteedResources::AbstractResourcer` with 2 simple methods. Here's a sample class. Just change the class name, and make sure `app-name` returns the name of your app. It must be a single string that can be be used as a folder name. 
+
+
+```raku
     use XDG::GuaranteedResources::AbstractResourcer;
 
     unit class My::Resourcer does XDG::GuaranteedResources::AbstractResourcer;
 
     # for XDG::GuaranteedResources::AbstractResourcer
+    method app-name(){'my_app';}
     method fetch-resource(::?CLASS:U:){%?RESOURCES;}
+```
 
 Once you've got that, you can just pass it in as the 2nd param to either of the provided methods, or assign it to a variable and pass that in.
 
-```raku
-use XDG::GuaranteedResources;
-# pass it the relative path to a file under your resources directory
-# path must be listed in the resources array of your META6.json
-guarantee-resource("config/my_app/app_config.toml", My::Resourcer);
 
-# assigning your resourcer to a variable is fine.
-my $resourcer = My::Resourcer;
-# if you have multiple to guarantee you pass a list to the plural form.
-guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>, $resourcer);
+To guarantee a directory by itself just use the terms from XDG::BaseDirectory.
+
+
+``` raku
+use XDG::BaseDirectory
+my $xdg_config_dir = config-home;
+unless $xdg_config_dir.IO.e {
+  mkdir($xdg_config_dir.Str);
+}
 ```
 
 DESCRIPTION
 ===========
+The intent is to use this in conjunction with modules that have a `resources` directory whose contents are only starting points to be copied out into the appropriate [XDG_BASE_DIRECTORY](https://wiki.archlinux.org/title/XDG_Base_Directory) directory.
+
+For example:  
+Many tools expect to have a config file that users will modify, like git's `~/.gitconfig`
+Your module could include a copy with all the defaults under `resources/config/my_config.json` and then use this module to guarantee that that exists in the relevant "XDG_BASE_DIRECTORY" location. `guarantee-resource($my_config, $resourcer);` would make sure that `$XDG_CONFIG_DIR/`
+
 
 Many tools expect a config file, sqlite database, or similar to be present. We store these in the resources listed in `META6.json`, and need to test if they exist and copy them over from `resources` if not.
 

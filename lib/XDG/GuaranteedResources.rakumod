@@ -14,60 +14,50 @@ my sub guarantee-dir(Str $dir, Bool :$debug){
 	}
 }
 
-my sub xdg-home-for-dir_array(@directory_array){
-	given @directory_array.first {
-		when $_ eq 'config' {
-			config-home
-		}
-		when $_ eq 'data' {
-			data-home
-		}
-		default {
-			die("resources must be stored under config or data subdirectory");
-		}
-	}
+multi sub guarantee-data-resource(Str $path, $resourcer, Bool :$debug=False) is export returns Str {
+	guarantee-resource('data', $path, $resourcer);
+}
+multi sub guarantee-config-resource(Str $path, $resourcer, Bool :$debug=False) is export returns Str {
+	guarantee-resource('config', $path, $resourcer);
+}
+multi sub guarantee-cache-resource(Str $path, $resourcer, Bool :$debug=False) is export returns Str {
+	guarantee-resource('cache', $path, $resourcer);
+}
+multi sub guarantee-runtime-resource(Str $path, $resourcer, Bool :$debug=False) is export returns Str {
+	guarantee-resource('runtime', $path, $resourcer);
+}
+multi sub guarantee-state-resource(Str $path, $resourcer, Bool :$debug=False) is export returns Str {
+	guarantee-resource('state', $path, $resourcer);
 }
 
-my sub path-to-directory-array(IO::Path $path, @directory_array = [] ) {
-	my $parent = $path.parent;
-	# TODO: UNIX limitation. Need good way to determine path separator
-	return @directory_array if $parent.Str eq '/' or $parent.Str eq '.';
-	@directory_array.unshift($parent.basename);
-	path-to-directory-array($parent, @directory_array);
-}
-
-my sub resource-to-xdg-dir(@directory_array) returns Str {
-	# experting directory_array to be something like
-	# ["config", "foo.txt"]
-	# ["convig", "subdir", "foo.txt"]
-	my $home_dir = xdg-home-for-dir_array(@directory_array);
-	# TODO: UNIX limitation. Need good way to determine path separator
-	my $joined_subpath = @directory_array.elems == 2
-						  ?? @directory_array[1]
-						  !! @directory_array[1..∞].join("/");
-	IO::Spec::Unix.catpath($, $home_dir.Str, $joined_subpath)
-}
 
 
 #| Guarantees a resource is present & provides the path it can be found at.
-multi sub guarantee-resource(Str $resource_path,
+multi sub guarantee-resource(Str $which_xdg_home, Str $resource_path,
 							 $resourcer, #= must implement XDG::GuaranteedResource::AbstractResourcer
 							 Bool :$debug=False
-							) is export returns Str {
+							) returns Str {
 	my $io_path = $resource_path.IO;
-	my @dir_array = path-to-directory-array($io_path);
-	my $xdg_dir = resource-to-xdg-dir(@dir_array);
-	note("XDG DIR for resource: $xdg_dir") if $debug;
-	guarantee-dir($xdg_dir, debug => $debug);
-	my $xdg_path = IO::Spec::Unix.catpath($, $xdg_dir, $io_path.basename);
+	# catpath: https://docs.raku.org/type/IO/Spec/Unix#method_catpath
+	my $xdg_home = do given $which_xdg_home {
+		when 'data' { data-home }
+		when 'config' { config-home }
+		when 'cache' { data-home }
+		when 'runtime' { data-home }
+		when 'state' { data-home }
+		default { die("Unknown XDG Home: $which_xdg_home") }
+	}
+	guarantee-dir($xdg_home.Str, debug => $debug);
+	my $xdg_path = IO::Spec::Unix.catpath($, $xdg_home.Str, $io_path.basename);
 	if $xdg_path.IO.e {
 		note("$resource_path already present") if $debug;
 	} else {
 		note($io_path.basename ~ " missing from target dir") if $debug;
 		note("Copying $resource_path to $xdg_path") if $debug;
-		my $actual_resource_path = $resourcer.fetch-resource{$resource_path};
+		my $module_resource_path = IO::Spec::Unix.catpath($, $which_xdg_home, $resource_path);
+		my $actual_resource_path = $resourcer.fetch-resource{$module_resource_path};
 		die("$resource_path doesn't exist in resources") if $actual_resource_path.comb ~~ Empty;
-		copy($resourcer.fetch-resource{$resource_path}, $xdg_path);
+		copy($resourcer.fetch-resource{$module_resource_path}, $xdg_path);
 	}
 	return $xdg_path;
 
@@ -82,14 +72,6 @@ multi sub guarantee-resource(Str $resource_path,
 
 }
 
-#| Guarantees a list of resources are present. Returns the paths they can be found at.
-our sub guarantee-resources(@resource_paths, $resourcer, Bool :$debug=False)  is export returns Array {
-	my @response = [];
-	for @resource_paths -> $resource_path {
-		@response.push(guarantee-resource($resource_path, $resourcer, debug => $debug));
-	}
-	return @response;
-}
 
 =begin pod
 
@@ -119,14 +101,17 @@ Once you've got that, you can just pass it in as the 2nd param to either of the 
 
 
 use XDG::GuaranteedResources;
-# pass it the relative path to a file under your resources directory
-# path must be listed in the resources array of your META6.json
-guarantee-resource("config/my_app/app_config.toml", My::Resourcer);
+# Your module's resources are stored in one of the following directories under `resources`
+# `data`, `config`, `cache`, `runtime`, or `state`.
+# These correspond to the common `XDG_BASE_DIRECTORY` directories.
+# call guarantee-<type>-resource(...) with the relative path to
+# the resourc (under the appropriate type directory), and your Resourcer.
+#
+# full resource path must be listed in the resources array of your META6.json
+guarantee-config-resource("app_config.toml", My::Resourcer);
 
 # assigning your resourcer to a variable is fine.
 my $resourcer = My::Resourcer;
-# if you have multiple to guarantee you pass a list to the plural form.
-guarantee-resources(<config/my_app/app_config.toml data/my_app/cool_database.db>, $resourcer);
 =end code
 
 =head1 DESCRIPTION

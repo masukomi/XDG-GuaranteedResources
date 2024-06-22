@@ -22,10 +22,10 @@ is(%*ENV<XDG_CONFIG_HOME>.IO.e, False, (%*ENV<XDG_CONFIG_HOME> ~ " shouldn't exi
 is(%*ENV<XDG_DATA_HOME>.IO.e, False, (%*ENV<XDG_DATA_HOME> ~ " shouldn't exist yet"));
 
 # test that it copies things
-is(guarantee-resource("config/xdg-gr/config_file.test", $resourcer).IO.e, True, "top level config file");
-is(guarantee-resource("data/xdg-gr/data_file.test", $resourcer).IO.e, True, "top level data file");
-is(guarantee-resource("data/xdg-gr/data_subdir/data_subdir_file.test", $resourcer).IO.e, True, "data file in subdirectory");
-dies-ok({guarantee-resource("data/xdg-gr/non_existent_file.test", $resourcer)});
+is(guarantee-config-resource("config_file.test", $resourcer).IO.e, True, "top level config file");
+is(guarantee-data-resource("data_file.test", $resourcer).IO.e, True, "top level data file");
+is(guarantee-data-resource("data_subdir/data_subdir_file.test", $resourcer).IO.e, True, "data file in subdirectory");
+dies-ok({guarantee-data-resource("non_existent_file.test", $resourcer)});
 #ok(guarantee-resource("data/xdg-gr/non_existent_file.test"));
 
 # test that it doesn't overwrite existing things
@@ -34,7 +34,7 @@ my $fh = open ($pre_existing_file_path), :w;
 $fh.print("existing_stuff");
 $fh.close;
 
-is(guarantee-resource("config/xdg-gr/config_file.test", $resourcer).IO.e, True, "top level config file");
+is(guarantee-config-resource("config_file.test", $resourcer).IO.e, True, "top level config file");
 $fh = open $pre_existing_file_path, :r;
 my $contents = $fh.slurp;
 $fh.close;
@@ -42,14 +42,14 @@ is($contents, "existing_stuff", "contents overwritten");
 
 rmtree($base) if $base.e;
 
-$base = create-base-dir();
-my @paths = guarantee-resources(<config/xdg-gr/config_file.test data/xdg-gr/data_subdir/data_subdir_file.test>, $resourcer);
-for @paths -> $path {
-	ok($path.IO.e);
-}
+# $base = create-base-dir();
+# my @paths = guarantee-resources(<config/xdg-gr/config_file.test data/xdg-gr/data_subdir/data_subdir_file.test>, $resourcer);
+# for @paths -> $path {
+# 	ok($path.IO.e);
+# }
+#
+# shell("tree $base");
 
-
-shell("tree $base");
 END {
 	rmtree($base) if $base.e
 }
